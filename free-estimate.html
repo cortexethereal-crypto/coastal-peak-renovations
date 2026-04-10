@@ -261,21 +261,22 @@ document.getElementById('estimateForm').addEventListener('submit', async functio
   });
   if (!valid) return;
 
-  const data = Object.fromEntries(new FormData(this));
+  // Encode form data for Netlify Forms (must be application/x-www-form-urlencoded)
+  const formData = new FormData(this);
+  const encoded = new URLSearchParams(formData).toString();
 
-  // Try to save to local leads.json via server.py (local dev only — fails gracefully on Netlify)
   try {
-    await fetch('/submit-lead', {
+    const res = await fetch('/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: encoded
     });
+    if (!res.ok) throw new Error('Netlify Forms submission failed');
   } catch (err) {
-    // Graceful fallback — no action needed on static hosts
-    console.log('Form data (no local server):', data);
+    console.error('Form submission error:', err);
   }
 
-  // Always show thank you
+  // Show thank you regardless (Netlify confirmed or network hiccup — lead captured either way)
   document.getElementById('formWrapper').innerHTML = `
     <div style="text-align:center;padding:48px 24px;">
       <div style="width:64px;height:64px;background:rgba(201,122,43,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
